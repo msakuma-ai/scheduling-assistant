@@ -135,29 +135,54 @@ function pickEventType(durationMinutes) {
 // API: Get available slots with priority sorting
 app.post('/api/slots', async (req, res) => {
   try {
-    const { duration, timeZone } = req.body;
+    const { duration, timeZone, timeframe } = req.body;
     const eventTypeKey = pickEventType(duration);
     const eventTypeUri = EVENT_TYPES[eventTypeKey];
 
-    // Look 2 weeks ahead, querying in weekly chunks (Calendly 7-day limit)
+    // Determine date range based on timeframe
     const now = new Date();
     const startDate = new Date(now);
+
+    // Calculate how many days ahead to look based on timeframe
+    let daysAhead = 14;
+    if (timeframe === 'few_days') daysAhead = 4;
+    else if (timeframe === 'this_week') daysAhead = 7;
+    else if (timeframe === 'next_week') {
+      // Start from next Monday
+      const dayOfWeek = startDate.getDay();
+      const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+      startDate.setDate(startDate.getDate() + daysUntilMonday);
+      daysAhead = 7;
+    } else if (timeframe === 'two_weeks') daysAhead = 21;
+
+    // Query in weekly chunks (Calendly 7-day limit)
     const week1End = new Date(startDate);
-    week1End.setDate(week1End.getDate() + 6);
+    week1End.setDate(week1End.getDate() + Math.min(6, daysAhead));
     const week2Start = new Date(week1End);
     week2Start.setDate(week2Start.getDate() + 1);
     const week2End = new Date(week2Start);
-    week2End.setDate(week2End.getDate() + 6);
+    week2End.setDate(week2End.getDate() + Math.min(6, Math.max(0, daysAhead - 7)));
     const overallEnd = new Date(startDate);
-    overallEnd.setDate(overallEnd.getDate() + 14);
+    overallEnd.setDate(overallEnd.getDate() + daysAhead);
 
-    // Fetch both weeks in parallel
-    const [times1, times2, scheduledEvents] = await Promise.all([
+    // Fetch in weekly chunks (only query second/third week if needed)
+    const fetches = [
       getAvailableTimes(eventTypeUri, startDate, week1End),
-      getAvailableTimes(eventTypeUri, week2Start, week2End),
       getScheduledEvents(startDate, overallEnd),
-    ]);
-    const availableTimes = [...times1, ...times2];
+    ];
+    if (daysAhead > 7) {
+      fetches.push(getAvailableTimes(eventTypeUri, week2Start, week2End));
+    }
+    if (daysAhead > 14) {
+      const week3Start = new Date(week2End);
+      week3Start.setDate(week3Start.getDate() + 1);
+      const week3End = new Date(week3Start);
+      week3End.setDate(week3End.getDate() + 6);
+      fetches.push(getAvailableTimes(eventTypeUri, week3Start, week3End));
+    }
+    const results = await Promise.all(fetches);
+    const scheduledEvents = results[1];
+    const availableTimes = [results[0], ...results.slice(2)].flat();
 
     // Filter to only available slots
     const available = availableTimes
@@ -203,7 +228,8 @@ app.post('/api/slots', async (req, res) => {
     });
 
     // Return top 6 slots
-    const slots = scored.slice(0, 6);
+    // Return more slots so frontend can split into preferred + more
+    const slots = scored.slice(0, 10);
 
     res.json({
       slots,
