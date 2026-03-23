@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedule a Meeting with Mike</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <div class="header-avatar">MS</div>
+      <div class="header-info">
+        <h1>Michael Sakuma's Scheduling Assistant</h1>
+        <p>Let's find a great time to connect!</p>
+      </div>
+    </div>
+    <div class="chat-messages" id="messages"></div>
+    <div class="chat-input-area" id="inputArea">
+      <input type="text" id="userInput" placeholder="Type your response..." autocomplete="off">
+      <button id="sendBtn" onclick="sendMessage()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
