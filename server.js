@@ -87,8 +87,8 @@ async function fetchAvailableSlots(durationMinutes, userTZ, timeframe) {
   const now = new Date();
   const startDate = new Date(now);
   let daysAhead = 14;
-  if (timeframe === 'few_days') daysAhead = 4;
-  else if (timeframe === 'this_week') daysAhead = 7;
+  if (timeframe === 'few_days') daysAhead = 7;
+  else if (timeframe === 'this_week') daysAhead = 10;
   else if (timeframe === 'next_week') {
     const dayOfWeek = startDate.getDay();
     const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
@@ -150,8 +150,25 @@ async function fetchAvailableSlots(durationMinutes, userTZ, timeframe) {
 
   scored.sort((a, b) => a.tier !== b.tier ? a.tier - b.tier : new Date(a.isoStart) - new Date(b.isoStart));
 
+  // Ensure each available day is represented in results
+  const seen = new Set();
+  const diverse = [];
+  for (const slot of scored) {
+    const day = slot.display.split(' at ')[0];
+    if (!seen.has(day)) {
+      seen.add(day);
+      diverse.push(slot);
+    }
+  }
+  // Fill remaining slots up to 15 with best remaining
+  for (const slot of scored) {
+    if (diverse.length >= 15) break;
+    if (!diverse.includes(slot)) diverse.push(slot);
+  }
+  diverse.sort((a, b) => a.tier !== b.tier ? a.tier - b.tier : new Date(a.isoStart) - new Date(b.isoStart));
+
   return {
-    slots: scored.slice(0, 10),
+    slots: diverse,
     schedulingUrl: SCHEDULING_URLS[eventTypeKey],
     eventTypeKey,
   };
