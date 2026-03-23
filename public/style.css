@@ -225,6 +225,20 @@ body {
   transform: scale(1.05);
 }
 
+.chat-link {
+  color: #667eea;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.bot-message a.chat-link {
+  color: #4a5ae8;
+}
+
+.bot-message a.chat-link:hover {
+  color: #3b49d4;
+}
+
 @media (max-width: 560px) {
   body { padding: 0; }
   .chat-container {
