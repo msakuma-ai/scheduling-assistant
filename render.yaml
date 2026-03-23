@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: scheduling-assistant
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: CALENDLY_API_TOKEN
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: EMAIL_TO
+        sync: false
+      - key: HOST_NAME
+        value: Michael Sakuma
+      - key: PORT
+        value: 3000
+      - key: NODE_ENV
+        value: production
